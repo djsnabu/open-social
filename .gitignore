@@ -1,0 +1,20 @@
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Dependencies and build output
+node_modules/
+.next/
+dist/
+coverage/
+
+# Local runtime data
+*.log
+*.db
+*.db-shm
+*.db-wal
+uploads/
+.DS_Store
