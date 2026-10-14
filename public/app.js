@@ -73,12 +73,22 @@ function renderCalendar() {
   const first = new Date(Date.UTC(year, month, 1));
   const start = new Date(first); start.setUTCDate(1 - (first.getUTCDay() + 6) % 7);
   const today = wallTime(Date.now(), zone).slice(0, 10);
-  const scheduled = posts.filter(p => p.scheduled_at && p.state !== 'cancelled');
+  const scheduled = posts.filter(p => p.scheduled_at && p.state !== 'cancelled').sort((a, b) => Date.parse(a.scheduled_at) - Date.parse(b.scheduled_at) || a.id.localeCompare(b.id));
   let html = ['Ma', 'Ti', 'Ke', 'To', 'Pe', 'La', 'Su'].map(day => `<span class="weekday">${day}</span>`).join('');
   for (let i = 0; i < 42; i++) {
     const date = new Date(start.getTime() + i * 86400000), day = date.toISOString().slice(0, 10);
-    const count = scheduled.filter(p => wallTime(p.scheduled_at, zone).startsWith(day)).length;
-    html += `<button class="day${date.getUTCMonth() !== month ? ' other' : ''}${day === today ? ' today' : ''}${day === selectedDay ? ' selected' : ''}" data-day="${day}" aria-label="${day}, ${count} julkaisua" aria-pressed="${day === selectedDay}"><span class="day-number">${date.getUTCDate()}</span>${count ? `<span class="day-count">${count} julk.</span>` : ''}</button>`;
+    const dayPosts = scheduled.filter(p => wallTime(p.scheduled_at, zone).startsWith(day));
+    const previews = dayPosts.map(p => {
+      const channel = channels.find(c => c.id === p.channel_id);
+      const time = wallTime(p.scheduled_at, zone).slice(11, 16);
+      const name = `${channel?.name || 'Kanava'} · ${channel ? providerName(channel.provider) : ''}`;
+      return `<button class="calendar-post" data-detail="${esc(p.id)}" aria-label="${esc(`${time} · ${name} · ${labels[p.state]} · ${p.text || 'Kuvajulkaisu'}`)}">
+        <span class="calendar-post-time">${time} <span>${esc(channel?.provider === 'instagram' ? 'IG' : 'FB')}</span></span>
+        ${p.media_id ? `<img src="/media/${esc(p.media_id)}.jpg" alt="" loading="lazy">` : ''}
+        <span class="calendar-post-text">${esc(p.text || 'Kuvajulkaisu')}</span>
+        <span class="calendar-post-channel">${esc(channel?.name || 'Kanava')}</span>${badge(p.state)}</button>`;
+    }).join('');
+    html += `<div class="day${date.getUTCMonth() !== month ? ' other' : ''}${day === today ? ' today' : ''}${day === selectedDay ? ' selected' : ''}"><button class="day-heading" data-day="${day}" aria-label="${day}, ${dayPosts.length} julkaisua" aria-pressed="${day === selectedDay}"><span class="day-number">${date.getUTCDate()}</span>${dayPosts.length ? `<span class="day-count">${dayPosts.length} julk.</span>` : ''}</button><div class="day-posts">${previews}</div></div>`;
   }
   $('#month-grid').innerHTML = html;
   $('#list-title').textContent = selectedDay ? `Julkaisut ${selectedDay.split('-').reverse().join('.')}` : 'Kuukauden julkaisut & luonnokset';
@@ -92,7 +102,7 @@ function renderCalendar() {
   }).join('') : '<div class="empty"><h3>Seuraava julkaisu alkaa tästä.</h3><p>Tässä näkymässä ei vielä ole julkaisuja. Yhdistä kanava ja tallenna ensimmäinen luonnos.</p><a href="#editor">Kirjoita julkaisu →</a></div>';
   $('#more-posts').hidden = nextOffset === null;
 }
-$('#month-grid').addEventListener('click', event => { const button = event.target.closest('[data-day]'); if (button) { selectedDay = button.dataset.day; renderCalendar(); } });
+$('#month-grid').addEventListener('click', event => { const post = event.target.closest('[data-detail]'); if (post) { details(post.dataset.detail).catch(error => notify(error.message, true)); return; } const button = event.target.closest('[data-day]'); if (button) { selectedDay = button.dataset.day; renderCalendar(); } });
 $('#prev-month').onclick = () => { month--; if (month < 0) { month = 11; year--; } selectedDay = null; renderCalendar(); };
 $('#next-month').onclick = () => { month++; if (month > 11) { month = 0; year++; } selectedDay = null; renderCalendar(); };
 $('#clear-day').onclick = () => { selectedDay = null; renderCalendar(); };

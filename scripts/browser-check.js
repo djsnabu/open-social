@@ -74,6 +74,29 @@ try {
     await page.getByRole('button', { name: 'Ajasta', exact: true }).click();
     await page.locator('#calendar').waitFor({ state: 'visible' });
     assert.equal(app.db.prepare('SELECT state FROM posts WHERE text=?').get(`Muokattu selainkoe ${viewport.width}`).state, 'scheduled');
+    // Multiple posts on one day, including media and a cancelled post, use the real calendar renderer.
+    const monthPrefix = new Date().toISOString().slice(0, 7), day = `${monthPrefix}-15`;
+    const mediaId = app.db.prepare('SELECT id FROM media LIMIT 1').get().id;
+    for (const [suffix, time, state, media] of [['late', '18:00', 'scheduled', null], ['early', '08:30', 'scheduled', mediaId], ['middle', '12:00', 'scheduled', null], ['cancelled', '09:00', 'cancelled', null]]) {
+      app.db.prepare('INSERT INTO posts(id,channel_id,text,media_id,state,scheduled_at,timezone,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?)')
+        .run(`preview-${viewport.width}-${suffix}`, 'channel-1', `Kalenterikoe ${suffix} <teksti>`, media, state, `${day}T${time}:00.000Z`, 'UTC', new Date().toISOString(), new Date().toISOString());
+    }
+    await page.reload();
+    await page.locator('#calendar-zone').selectOption('UTC');
+    const previews = page.locator(`.calendar-post[data-detail^="preview-${viewport.width}-"]`);
+    assert.deepEqual(await previews.evaluateAll(els => els.map(el => el.dataset.detail)), ['early', 'middle', 'late'].map(suffix => `preview-${viewport.width}-${suffix}`));
+    assert.equal(await page.locator(`[data-day="${day}"]`).locator('..').locator(`.calendar-post[data-detail^="preview-${viewport.width}-"]`).count(), 3);
+    const early = page.locator(`[data-detail="preview-${viewport.width}-early"]`).first();
+    await early.locator('img').evaluate(img => img.decode());
+    assert.match(await early.innerText(), /08:30/);
+    assert.match(await early.innerText(), /<teksti>/);
+    await early.click();
+    await page.locator('#details').waitFor({ state: 'visible' });
+    assert.match(await page.locator('#detail-content').innerText(), /Kalenterikoe early/);
+    await page.locator('#close-details').click();
+    await page.locator(`[data-day="${day}"]`).click();
+    assert.match(await page.locator('#list-title').innerText(), /15/);
+    await page.screenshot({ path: `artifacts/calendar-previews-${viewport.width}.png`, fullPage: true, animations: 'disabled' });
     await page.locator('nav a[href="#channels"]').click();
     await page.getByRole('button', { name: 'Tarkista', exact: true }).first().click();
     await page.getByText('Yhteys toimii.', { exact: false }).waitFor();
