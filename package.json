@@ -11,15 +11,19 @@
   "scripts": {
     "setup": "node scripts/setup.js",
     "start": "node --env-file-if-exists=.env server/main.js",
+    "mcp": "node server/mcp.js",
     "dev": "node --watch --env-file-if-exists=.env server/main.js",
     "test": "node --test",
-    "check": "node --check server/app.js && node --check public/app.js",
+    "check": "node --check server/app.js && node --check public/app.js && node --check server/mcp.js",
     "test:browser": "node scripts/browser-check.js"
   },
   "dependencies": {
-    "sharp": "^0.35.5"
+    "@modelcontextprotocol/server": "^2.3.1",
+    "sharp": "^0.35.5",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@modelcontextprotocol/client": "^2.3.1",
     "@playwright/test": "^1.64.0"
   }
 }
