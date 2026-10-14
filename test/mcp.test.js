@@ -26,10 +26,10 @@ async function connect(t, origin, token) {
     return { ...response, data: JSON.parse(response.content[0].text) };
   } };
 }
-async function fixture(t) {
+async function fixture(t, meta = {}) {
   const dir = await mkdtemp(join(tmpdir(), 'open-social-mcp-'));
   const config = { origin: 'http://localhost', dataDir: dir, appKey: 'ab'.repeat(32), publishingEnabled: false };
-  const app = await createApp(config, { meta: {} });
+  const app = await createApp(config, { meta });
   await new Promise(resolve => app.server.listen(0, '127.0.0.1', resolve));
   config.origin = `http://127.0.0.1:${app.server.address().port}`;
   const token = `os_${randomToken()}`;
@@ -42,8 +42,8 @@ async function fixture(t) {
 test('MCP stdio discovers tools and prepares drafts through the real scoped API', async t => {
   const f = await fixture(t);
   const { tools } = await f.client.listTools();
-  assert.equal(tools.length, 9);
-  assert.ok(!tools.some(tool => /publish|schedule/.test(tool.name)));
+  assert.equal(tools.length, 11);
+  assert.ok(tools.find(tool => tool.name === 'publish_post').annotations.openWorldHint);
   const status = await f.call('get_status');
   assert.equal(status.data.owner, false);
   assert.equal(status.data.publishingEnabled, false);
@@ -82,6 +82,49 @@ test('MCP stdio discovers tools and prepares drafts through the real scoped API'
   assert.equal((await f.call('create_draft', { ...args, idempotency_key: 'forbidden-key-001' })).data.error.code, 'forbidden');
   f.db.prepare('DELETE FROM api_keys').run();
   assert.equal((await f.call('list_posts')).data.error.code, 'unauthorized');
+});
+
+test('MCP publishing enforces scopes and the switch, queues once, and preserves uncertain outcomes', async t => {
+  let publications = 0;
+  const f = await fixture(t, { publish: async () => {
+    publications++;
+    if (publications > 1) throw Object.assign(new Error('Simulated timeout'), { uncertain: true });
+    return { id: '123_456', url: 'https://www.facebook.com/123_456' };
+  } });
+  async function draft(key) {
+    return (await f.call('create_draft', { channel_id: 'channel-1', text: 'Approved test content', timezone: 'Europe/Helsinki', idempotency_key: key })).data;
+  }
+  const post = await draft('publish-draft-001');
+  const args = { id: post.id, version: post.version, idempotency_key: 'publish-once-001' };
+  assert.equal((await f.call('publish_post', args)).data.error.code, 'forbidden');
+  f.db.prepare('UPDATE api_keys SET scopes=?').run(JSON.stringify(['channels:read', 'posts:read', 'posts:write', 'posts:publish']));
+  assert.equal((await f.call('publish_post', args)).data.error.code, 'publishing_disabled');
+  f.config.publishingEnabled = true;
+  const queued = await f.call('publish_post', args);
+  assert.equal(queued.data.state, 'scheduled');
+  assert.deepEqual((await f.call('publish_post', args)).data, queued.data);
+  await f.scheduler.tick();
+  assert.equal((await f.call('get_post', { id: post.id })).data.state, 'published');
+  await f.call('publish_post', args);
+  await f.scheduler.tick();
+  assert.equal(publications, 1);
+  const future = await draft('schedule-draft-001');
+  const schedule = { id: future.id, version: future.version, scheduled_at: new Date(Date.now() + 86400000).toISOString(), idempotency_key: 'schedule-once-001' };
+  const scheduled = await f.call('schedule_post', schedule);
+  assert.equal(scheduled.data.scheduled_at, schedule.scheduled_at);
+  assert.deepEqual((await f.call('schedule_post', schedule)).data, scheduled.data);
+  const invalid = await f.client.callTool({ name: 'schedule_post', arguments: { ...schedule, scheduled_at: '2026-12-01T12:00:00+02:00' } });
+  assert.equal(invalid.isError, true);
+  const past = await draft('schedule-past-001');
+  assert.equal((await f.call('schedule_post', { ...schedule, id: past.id, scheduled_at: '2000-01-01T00:00:00Z', idempotency_key: 'schedule-past-002' })).data.error.code, 'invalid_schedule');
+  const ambiguous = await draft('uncertain-draft-001');
+  await f.call('publish_post', { id: ambiguous.id, version: ambiguous.version, idempotency_key: 'publish-uncertain-001' });
+  await f.scheduler.tick();
+  const uncertain = (await f.call('get_post', { id: ambiguous.id })).data;
+  assert.equal(uncertain.state, 'uncertain');
+  assert.equal((await f.call('publish_post', { id: uncertain.id, version: uncertain.version, idempotency_key: 'publish-uncertain-002' })).data.error.code, 'invalid_state');
+  await f.scheduler.tick();
+  assert.equal(publications, 2);
 });
 
 test('MCP refuses redirects instead of forwarding its bearer token', async t => {

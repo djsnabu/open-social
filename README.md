@@ -27,10 +27,10 @@ The initial workspace is empty. Configure your own Meta app to connect actual ch
 - Persistent UTC schedules with an IANA display timezone, DST ambiguity detection and a responsive calendar/list.
 - Immediate publication queue, recorded attempts, idempotent writes, optimistic edit versions and conservative handling of ambiguous outcomes.
 - Scoped and revocable agent keys; a documented `/api/v1` API.
-- Local stdio MCP server for channels, drafts and image uploads, using a scoped API key.
+- Local stdio MCP server for channels, drafts, images, scheduling and publication, using a scoped API key.
 - Docker Compose packaging and GitHub Actions checks.
 
-This release supports Facebook Page text / single-image posts and linked Instagram professional-account single-image posts. It does not include teams, video, carousels, stories, analytics or Postiz migration. MCP supports preparation only; it cannot schedule or publish.
+This release supports Facebook Page text / single-image posts and linked Instagram professional-account single-image posts. It does not include teams, video, carousels, stories, analytics or Postiz migration. MCP publication requires a key with `posts:publish` and enabled server-side publishing.
 
 ## Documentation
 
@@ -69,7 +69,7 @@ Channel connections are the highest priority. Facebook and Instagram are the ini
 - Validate a post before scheduling or publishing it.
 - Repeated requests and worker retries must not create duplicate publications.
 - Record publication attempts and distinguish scheduled, publishing, published, and failed states.
-- The MCP integration exposes draft preparation through the same scoped API.
+- The MCP integration exposes preparation and publication through the same scoped API.
 
 ## Implementation milestones
 
