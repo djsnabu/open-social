@@ -182,6 +182,7 @@ export async function createApp(config, options = {}) {
         requireValue(flow, 'invalid_oauth_state', 'Yhdistämispyyntö vanheni tai ei kuulu tähän istuntoon. Aloita uudelleen.', 400);
         requireValue(!url.searchParams.has('error') && url.searchParams.get('code'), 'oauth_denied', 'Metan kirjautuminen peruttiin. Yritä uudelleen.');
         const candidates = await meta.discover(url.searchParams.get('code'));
+        requireValue(candidates.length, 'no_channels', 'Meta ei palauttanut julkaistavia kanavia. Tarkista sivuvalinnat ja yritysportfolion oikeudet.', 409);
         db.prepare('INSERT INTO oauth VALUES(?,?,?,?)').run(flow.hash, user.hash, Date.now() + 600000, secrets.encrypt(candidates));
         res.writeHead(303, { Location: '/?connected=choose#channels' }); return res.end();
       }

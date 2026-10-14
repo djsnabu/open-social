@@ -83,6 +83,15 @@ test('OAuth state is session-bound, single use and candidates hide tokens', asyn
   assert.match(replay.headers.get('location'), /invalid_oauth_state/);
 });
 
+test('OAuth reports an empty channel list instead of a successful connection', async t => {
+  const f = await fixture(t, { meta: { discover: async () => [] } });
+  const start = await f.request('/channels/connect', { method: 'POST', data: {} });
+  const state = new URL(start.data.url).searchParams.get('state');
+  const result = await f.request(`/auth/meta/callback?code=fake&state=${state}`);
+  assert.match(result.headers.get('location'), /connection_error=no_channels/);
+  assert.equal(f.db.prepare('SELECT count(*) AS count FROM oauth').get().count, 0);
+});
+
 test('durable idempotency prevents duplicate drafts and publications', async t => {
   const f = await fixture(t);
   const key = randomToken();
@@ -222,6 +231,9 @@ test('Meta adapter uses bearer auth, does not leak provider messages, and persis
     return Response.json(responses.shift());
   });
   const result = await meta.publish({ text: 'caption' }, { provider: 'instagram', remote_id: '123' }, 'test-token', 'https://social.example/image.jpg', id => saved.push(id));
+  const authorization = new URL(meta.authorizationUrl('test-state'));
+  assert.deepEqual(authorization.searchParams.get('scope').split(',').sort(),
+    ['pages_show_list', 'pages_read_engagement', 'pages_manage_posts', 'instagram_basic', 'instagram_content_publish', 'business_management'].sort());
   assert.equal(result.id, '789'); assert.equal(calls.length, 4);
   const rejected = createMeta(config, async () => Response.json({ error: { code: 190, message: 'SECRET MUST NOT LEAK' } }, { status: 400 }));
   await assert.rejects(rejected.health({ remote_id: '123' }, 'token'), error => error.code === 'reconnect_required' && !error.message.includes('SECRET'));

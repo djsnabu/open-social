@@ -40,7 +40,7 @@ export function createMeta(config, transport = fetch) {
     authorizationUrl(state) {
       const url = new URL(`https://www.facebook.com/${config.metaVersion}/dialog/oauth`);
       url.search = new URLSearchParams({ client_id: config.metaAppId, redirect_uri: `${config.origin}/auth/meta/callback`, state,
-        response_type: 'code', auth_type: 'rerequest', scope: 'pages_show_list,pages_read_engagement,pages_manage_posts,instagram_basic,instagram_content_publish' });
+        response_type: 'code', auth_type: 'rerequest', scope: 'pages_show_list,pages_read_engagement,pages_manage_posts,instagram_basic,instagram_content_publish,business_management' });
       return url.href;
     },
     async discover(code) {

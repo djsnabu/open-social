@@ -220,7 +220,9 @@ $('#login-form').onsubmit = async event => {
 };
 $('#logout').onclick = async () => { try { await api('/logout', { method: 'POST', data: {} }); status = null; channels = []; posts = []; $('#key-value').value = ''; $('#new-key').hidden = true; resetEditor(); showLogin(); } catch (error) { notify(error.message, true); } };
 const params = new URLSearchParams(location.search);
-if (params.has('connection_error')) notify(`Kanavan yhdistäminen epäonnistui (${params.get('connection_error')}). Aloita yhdistäminen uudelleen.`, true);
+if (params.has('connection_error')) notify(params.get('connection_error') === 'no_channels'
+  ? 'Meta ei palauttanut julkaistavia kanavia. Tarkista kirjautumisen sivuvalinnat ja yritysportfolion käyttöoikeudet, ja yhdistä uudelleen.'
+  : `Kanavan yhdistäminen epäonnistui (${params.get('connection_error')}). Aloita yhdistäminen uudelleen.`, true);
 if (location.search) history.replaceState(null, '', `/${location.hash}`);
 refresh().catch(error => { if (error.code !== 'unauthorized') notify(error.message, true); });
 setInterval(() => {
