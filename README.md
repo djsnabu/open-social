@@ -2,7 +2,51 @@
 
 An open-source, self-hosted social publishing app designed for mobile users and AI agents.
 
-**Status:** planning. This repository does not yet contain a working application.
+**Status: working local alpha.** Mobile-friendly Finnish UI, an authenticated agent API, SQLite scheduling, original Facebook/Instagram provider code, and automated tests are implemented. **Real Meta OAuth and social publication still require acceptance testing with your own app and a designated test account.** Publishing is disabled by default.
+
+## Run locally
+
+Requires Node.js 24+ (including its built-in SQLite module).
+
+```sh
+npm ci
+npm run setup
+npm start
+```
+
+Open **http://localhost:4310**. Read the generated login password from `data/initial-password.txt`; the setup command does not print secrets. `.env` and `data/` are excluded from Git. On Linux with a custom global libvips, use `SHARP_IGNORE_GLOBAL_LIBVIPS=1 npm ci` to use sharp's packaged binaries.
+
+The initial workspace is empty. Configure your own Meta app to connect actual channels. There are no pretend live accounts or imported production posts.
+
+## Implemented
+
+- One owner login; expiring HttpOnly sessions and origin checks.
+- Facebook OAuth with expiring, single-use state; explicit Page/linked Instagram selection and reconnection.
+- AES-256-GCM encryption of channel tokens and read-only connection checks.
+- Drafts, JPEG/PNG/WebP uploads, image validation, previews and editing.
+- Persistent UTC schedules with an IANA display timezone, DST ambiguity detection and a responsive calendar/list.
+- Immediate publication queue, recorded attempts, idempotent writes, optimistic edit versions and conservative handling of ambiguous outcomes.
+- Scoped and revocable agent keys; a documented `/api/v1` API.
+- Docker Compose packaging and GitHub Actions checks.
+
+This release supports Facebook Page text / single-image posts and linked Instagram professional-account single-image posts. It does not include teams, video, carousels, stories, analytics, Postiz migration or MCP tools.
+
+## Documentation
+
+- [Self-hosting and Meta setup](docs/self-hosting.md)
+- [Agent API, examples and failure handling](docs/api.md)
+- [Evidence, architecture and integration limits](docs/research.md)
+
+## Checks
+
+```sh
+npm test
+npm run check
+npx playwright install chromium
+npm run test:browser
+```
+
+For an existing Chromium, use `CHROMIUM_PATH=/usr/bin/chromium npm run test:browser`. Browser tests run in temporary workspaces with a fake provider, never your configured Meta account. Screenshots are written to ignored `artifacts/`. CI runs on Node 24.
 
 ## First release
 
@@ -27,15 +71,15 @@ Channel connections are the highest priority. Facebook and Instagram are the ini
 
 ## Implementation milestones
 
-- [ ] Inspect the installed Postiz version, channel flows, and API behavior using read-only access.
-- [ ] Confirm the first channel providers and their OAuth requirements.
-- [ ] Choose the application stack and document local setup.
-- [ ] Implement account authentication, channel connection, status, and reconnection.
-- [ ] Implement drafts, media validation, previews, and immediate publishing.
-- [ ] Implement durable scheduling, timezone handling, and publication reconciliation.
-- [ ] Build and verify the mobile calendar and post editor.
-- [ ] Document and test agent API authentication, validation, and idempotency.
-- [ ] Provide self-hosting instructions and an example configuration without secrets.
+- [ ] Inspect installed Postiz channel/API behavior (image identity checked; live behavior still unverified).
+- [x] Select first providers and document OAuth requirements, with account-specific access still to verify.
+- [x] Choose the application stack and document local setup.
+- [x] Implement account authentication, channel connection, status, and reconnection.
+- [x] Implement drafts, media validation, previews, and immediate publishing (fake-provider tests).
+- [x] Implement durable scheduling, timezone handling, and publication reconciliation.
+- [x] Build and verify the mobile calendar and post editor.
+- [x] Document and test agent API authentication, validation, and idempotency.
+- [x] Provide self-hosting instructions and an example configuration without secrets.
 - [ ] Test the complete workflow with a designated test account before production use.
 
 ## Development boundaries

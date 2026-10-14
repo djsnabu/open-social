@@ -18,3 +18,5 @@ coverage/
 *.db-wal
 uploads/
 .DS_Store
+data/
+artifacts/
