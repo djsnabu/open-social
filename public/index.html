@@ -1,82 +1,82 @@
 <!doctype html>
-<html lang="fi">
+<html lang="en">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f7f6f3"><meta name="description" content="Omat kanavat, julkaisut ja ajastukset yhdessä paikassa.">
-  <title>Open Social — Julkaisutyötila</title><link rel="stylesheet" href="/style.css">
+  <meta name="theme-color" content="#f7f6f3"><meta name="description" content="Your channels, posts and schedule in one place.">
+  <title>Open Social — Publishing workspace</title><link rel="stylesheet" href="/style.css">
   <script type="module" src="/app.js"></script>
 </head>
 <body>
-  <a class="skip" href="#main">Siirry sisältöön</a>
+  <a class="skip" href="#main">Skip to content</a>
   <div id="notice" role="status" aria-live="polite" hidden></div>
   <section id="login" class="login" hidden>
     <div class="wordmark"><span class="brand-mark" aria-hidden="true">os</span> open social<span class="version">/ 01</span></div>
-    <p class="eyebrow">OMA JULKAISUTYÖTILASI</p><h1>Ajatuksesta<br>julkaisuksi.</h1>
-    <p class="muted">Kanavat, sisältö ja kalenteri.<br>Sinun hallinnassasi, omalla palvelimellasi.</p>
-    <form id="login-form"><label>Salasana<input name="password" type="password" autocomplete="current-password" required maxlength="256"></label><button type="submit">Avaa työtila <span aria-hidden="true">↗</span></button></form>
-    <p class="small muted">Ensimmäisen kirjautumisen salasana löytyy palvelimen tiedostosta <code>data/initial-password.txt</code>.</p>
+    <p class="eyebrow">YOUR PUBLISHING WORKSPACE</p><h1>From idea<br>to published.</h1>
+    <p class="muted">Channels, content and calendar.<br>Your control. Your server.</p>
+    <form id="login-form"><label>Password<input name="password" type="password" autocomplete="current-password" required maxlength="256"></label><button type="submit">Open workspace <span aria-hidden="true">↗</span></button></form>
+    <p class="small muted">Find your initial password on the server in <code>data/initial-password.txt</code>.</p>
   </section>
   <div id="workspace" hidden>
     <aside class="sidebar">
       <a class="wordmark" href="#calendar"><span class="brand-mark" aria-hidden="true">os</span> open social</a>
-      <p class="eyebrow">TYÖTILA</p>
-      <nav aria-label="Päävalikko">
-        <a href="#calendar" data-nav="calendar"><span aria-hidden="true">▦</span> Kalenteri</a>
-        <a href="#editor" data-nav="editor"><span aria-hidden="true">＋</span> Uusi julkaisu</a>
-        <a href="#channels" data-nav="channels"><span aria-hidden="true">↗</span> Kanavat</a>
-        <a href="#agents" data-nav="agents"><span aria-hidden="true">⌘</span> Agentit & API</a>
+      <p class="eyebrow">WORKSPACE</p>
+      <nav aria-label="Main navigation">
+        <a href="#calendar" data-nav="calendar"><span aria-hidden="true">▦</span> Calendar</a>
+        <a href="#editor" data-nav="editor"><span aria-hidden="true">＋</span> New post</a>
+        <a href="#channels" data-nav="channels"><span aria-hidden="true">↗</span> Channels</a>
+        <a href="#agents" data-nav="agents"><span aria-hidden="true">⌘</span> Agents & API</a>
       </nav>
-      <div class="sidebar-bottom"><p class="small muted">Oma palvelin.<br>Oma julkaisutahti.</p><button id="logout" class="quiet">Kirjaudu ulos</button></div>
+      <div class="sidebar-bottom"><p class="small muted">Your server.<br>Your publishing pace.</p><button id="logout" class="quiet">Sign out</button></div>
     </aside>
     <main id="main" tabindex="-1">
-      <header class="topbar"><span>Julkaisutyötila</span><span class="small">OPEN SOCIAL <span class="muted">/ ALPHA</span></span></header>
+      <header class="topbar"><span>Publishing workspace</span><span class="small">OPEN SOCIAL <span class="muted">/ ALPHA</span></span></header>
       <div id="setup-note" class="setup-note" hidden></div>
       <section id="calendar" class="view">
-        <div class="page-heading"><div><p class="eyebrow">SISÄLTÖSI RYTMI</p><h1>Kalenteri</h1><p class="muted">Tilaa ajatuksille. Paikka jokaiselle julkaisulle.</p></div><a class="button" href="#editor">＋ Uusi julkaisu</a></div>
+        <div class="page-heading"><div><p class="eyebrow">YOUR CONTENT CALENDAR</p><h1>Calendar</h1><p class="muted">Room for ideas. A place for every post.</p></div><a class="button" href="#editor">＋ New post</a></div>
         <div id="stats" class="stats"></div>
-        <p class="small muted">Tuplaklikkaa päivää tehdäksesi uuden julkaisun.</p><div class="calendar-toolbar"><div class="month-switch"><button id="prev-month" class="quiet" aria-label="Edellinen kuukausi">←</button><h2 id="month-title"></h2><button id="next-month" class="quiet" aria-label="Seuraava kuukausi">→</button></div><label class="inline-label">Aikavyöhyke <select id="calendar-zone"></select></label></div>
-        <p class="calendar-scroll-hint small muted">Selaa kalenteria sivusuunnassa nähdäksesi viikon kaikki päivät.</p><div class="calendar-scroll" role="region" aria-label="Kuukausikalenteri" tabindex="0"><div id="month-grid" class="month-grid"></div></div>
-        <div class="list-heading"><h2 id="list-title">Julkaisut</h2><button id="create-for-day" class="quiet" hidden>＋ Julkaisu tälle päivälle</button><button id="clear-day" class="quiet" hidden>Näytä koko kuukausi</button><label class="inline-label">Tila <select id="state-filter"><option value="all">Kaikki</option><option value="draft">Luonnokset</option><option value="scheduled">Ajastetut</option><option value="published">Julkaistut</option><option value="failed">Epäonnistuneet</option><option value="uncertain">Tarkistettavat</option><option value="cancelled">Perutut</option></select></label></div>
-        <div id="post-list"></div><button id="more-posts" class="quiet" hidden>Lataa lisää julkaisuja</button>
+        <p class="small muted">Double-click a day to create a post.</p><div class="calendar-toolbar"><div class="month-switch"><button id="prev-month" class="quiet" aria-label="Previous month">←</button><h2 id="month-title"></h2><button id="next-month" class="quiet" aria-label="Next month">→</button></div><label class="inline-label">Time zone <select id="calendar-zone"></select></label></div>
+        <p class="calendar-scroll-hint small muted">Scroll horizontally to see every day of the week.</p><div class="calendar-scroll" role="region" aria-label="Monthly calendar" tabindex="0"><div id="month-grid" class="month-grid"></div></div>
+        <div class="list-heading"><h2 id="list-title">Posts</h2><button id="create-for-day" class="quiet" hidden>＋ Post for this day</button><button id="clear-day" class="quiet" hidden>Show full month</button><label class="inline-label">Status <select id="state-filter"><option value="all">All</option><option value="draft">Drafts</option><option value="scheduled">Scheduled</option><option value="published">Published</option><option value="failed">Failed</option><option value="uncertain">Needs attention</option><option value="cancelled">Cancelled</option></select></label></div>
+        <div id="post-list"></div><button id="more-posts" class="quiet" hidden>Load more posts</button>
       </section>
       <section id="editor" class="view" hidden>
-        <div class="page-heading"><div><p class="eyebrow">YHDEN JULKAISUN VERRAN ETEENPÄIN</p><h1 id="editor-title">Uusi julkaisu</h1><p class="muted">Kirjoita, tarkista ja valitse oikea hetki.</p></div><button id="new-draft" class="quiet">Tyhjennä lomake</button></div>
+        <div class="page-heading"><div><p class="eyebrow">ONE POST AT A TIME</p><h1 id="editor-title">New post</h1><p class="muted">Write, review and choose the right moment.</p></div><button id="new-draft" class="quiet">Clear form</button></div>
         <div class="editor-layout">
           <form id="post-form">
-            <label>Kanava<select id="post-channel" required></select></label>
-            <label>Julkaisun teksti<textarea id="post-text" rows="9" placeholder="Mitä haluat kertoa?" maxlength="63206"></textarea></label><p id="char-count" class="small muted">0 merkkiä</p>
-            <label class="upload">Lisää kuva<input id="post-file" type="file" accept="image/jpeg,image/png,image/webp"><span class="small muted">JPEG, PNG tai WebP · enintään 8 Mt. Kuva muunnetaan JPEG-muotoon ja sijaintitiedot poistetaan.</span></label>
-            <div id="media-info" class="small" hidden><span></span> <button type="button" id="crop-image" class="quiet">Rajaa kuva</button> <button type="button" id="remove-image" class="quiet">Poista kuva</button></div>
-            <div class="schedule-fields"><label>Julkaisuaika<input id="schedule-time" type="datetime-local"></label><label>Aikavyöhyke<select id="post-zone"></select></label></div>
-            <p class="small muted">Luonnoksen muokkaus poistaa aiemman ajastuksen. Valitse ajastus uudelleen tallennuksen yhteydessä.</p>
-            <div class="form-actions"><button type="submit" value="draft" class="quiet">Tallenna luonnos</button><button type="submit" value="schedule">Ajasta</button><button type="submit" value="publish" class="quiet">Julkaise nyt</button></div>
+            <label>Channel<select id="post-channel" required></select></label>
+            <label>Post text<textarea id="post-text" rows="9" placeholder="What would you like to share?" maxlength="63206"></textarea></label><p id="char-count" class="small muted">0 characters</p>
+            <label class="upload">Add image<input id="post-file" type="file" accept="image/jpeg,image/png,image/webp"><span class="small muted">JPEG, PNG or WebP · up to 8 MB. Images are converted to JPEG and location metadata is removed.</span></label>
+            <div id="media-info" class="small" hidden><span></span> <button type="button" id="crop-image" class="quiet">Crop image</button> <button type="button" id="remove-image" class="quiet">Remove image</button></div>
+            <div class="schedule-fields"><label>Publish time<input id="schedule-time" type="datetime-local"></label><label>Time zone<select id="post-zone"></select></label></div>
+            <p class="small muted">Editing a scheduled post removes its schedule. Schedule it again when saving.</p>
+            <div class="form-actions"><button type="submit" value="draft" class="quiet">Save draft</button><button type="submit" value="schedule">Schedule</button><button type="submit" value="publish" class="quiet">Publish now</button></div>
           </form>
-          <aside class="preview-wrap"><p class="eyebrow">ESIKATSELU</p><div class="preview"><div class="preview-head"><span class="avatar" aria-hidden="true">os</span><div><strong id="preview-name">Valitse kanava</strong><p id="preview-provider" class="small muted">Julkaisun alustava esikatselu</p></div></div><img id="preview-image" alt="Julkaisuun valittu kuva" hidden><p id="preview-text">Tekstisi näkyy tässä.</p><div class="preview-foot">Ulkoasu voi vaihdella julkaisualustalla.</div></div></aside>
+          <aside class="preview-wrap"><p class="eyebrow">PREVIEW</p><div class="preview"><div class="preview-head"><span class="avatar" aria-hidden="true">os</span><div><strong id="preview-name">Choose a channel</strong><p id="preview-provider" class="small muted">Post preview</p></div></div><img id="preview-image" alt="Selected post image" hidden><p id="preview-text">Your text appears here.</p><div class="preview-foot">Appearance may vary on the publishing platform.</div></div></aside>
         </div>
       </section>
       <section id="channels" class="view" hidden>
-        <div class="page-heading"><div><p class="eyebrow">KAIKKI ALKAA YHTEYDESTÄ</p><h1>Omat kanavat</h1><p class="muted">Yhdistä sivut, joille haluat julkaista.</p></div><button id="connect">Yhdistä Metaan ↗</button></div>
-        <div class="connection-guide"><strong>Facebook & Instagram</strong><p>Yhdistä Facebook-sivu tai sivuun liitetty Instagram-ammattilaistili. Valitset kanavat kirjautumisen jälkeen. Henkilökohtaisia profiileja ei tueta.</p><p class="small muted">Yhteystarkistus varmistaa tilin lukuyhteyden. Julkaisuoikeus varmistetaan erillisellä testijulkaisulla.</p></div>
+        <div class="page-heading"><div><p class="eyebrow">START WITH A CONNECTION</p><h1>Your channels</h1><p class="muted">Connect the pages you want to publish to.</p></div><button id="connect">Connect to Meta ↗</button></div>
+        <div class="connection-guide"><strong>Facebook & Instagram</strong><p>Connect a Facebook Page or its linked Instagram professional account. Choose your channels after signing in. Personal profiles are not supported.</p><p class="small muted">The connection check verifies read access. Publishing access requires a separate test post.</p></div>
         <div id="candidates"></div><div id="channel-list"></div>
       </section>
       <section id="agents" class="view" hidden>
-        <div class="page-heading"><div><p class="eyebrow">SAMAT TOIMINNOT, OMA TYÖNKULKU</p><h1>Agentit & API</h1><p class="muted">Anna agentille vain sen tarvitsemat oikeudet.</p></div></div>
-        <div class="editor-layout"><div><form id="key-form"><label>Avaimen nimi<input name="name" required maxlength="80" placeholder="Sisältöassistentti"></label><fieldset><legend>Käyttöoikeudet</legend><label class="check"><input type="checkbox" name="scope" value="posts:read" checked> Lue julkaisut</label><label class="check"><input type="checkbox" name="scope" value="channels:read" checked> Lue kanavat</label><label class="check"><input type="checkbox" name="scope" value="posts:write"> Luo ja muokkaa luonnoksia</label><label class="check"><input type="checkbox" name="scope" value="media:write"> Lähetä kuvia</label><label class="check"><input type="checkbox" name="scope" value="posts:publish"> Julkaise ja ajasta</label></fieldset><button type="submit">Luo API-avain</button></form><div id="new-key" hidden><label>Kopioi avain nyt. Sitä ei näytetä uudelleen.<textarea id="key-value" readonly rows="3"></textarea></label><button id="hide-key" class="quiet">Olen tallentanut avaimen</button></div><div id="key-list"></div></div><aside class="api-guide"><h2>Valmis automaatioille.</h2><p>Versioitu JSON-API, rajatut oikeudet ja pysyvät julkaisutunnisteet.</p><code>GET /api/v1/channels<br>GET /api/v1/posts<br>POST /api/v1/posts</code><p>Kirjoittavat julkaisupyynnöt tarvitsevat <code>Idempotency-Key</code>-otsakkeen. Sama avain ja pyyntö palauttavat saman vastauksen.</p><a href="https://github.com/djsnabu/open-social/blob/main/docs/api.md" target="_blank" rel="noreferrer">API-ohje ja esimerkit ↗</a></aside></div>
+        <div class="page-heading"><div><p class="eyebrow">YOUR TOOLS, YOUR WORKFLOW</p><h1>Agents & API</h1><p class="muted">Give each agent only the permissions it needs.</p></div></div>
+        <div class="editor-layout"><div><form id="key-form"><label>Key name<input name="name" required maxlength="80" placeholder="Content assistant"></label><fieldset><legend>Permissions</legend><label class="check"><input type="checkbox" name="scope" value="posts:read" checked> Read posts</label><label class="check"><input type="checkbox" name="scope" value="channels:read" checked> Read channels</label><label class="check"><input type="checkbox" name="scope" value="posts:write"> Create and edit drafts</label><label class="check"><input type="checkbox" name="scope" value="media:write"> Upload images</label><label class="check"><input type="checkbox" name="scope" value="posts:publish"> Publish and schedule</label></fieldset><button type="submit">Create API key</button></form><div id="new-key" hidden><label>Copy this key now. It will not be shown again.<textarea id="key-value" readonly rows="3"></textarea></label><button id="hide-key" class="quiet">I have saved the key</button></div><div id="key-list"></div></div><aside class="api-guide"><h2>Ready for automation.</h2><p>A versioned JSON API, scoped permissions and persistent post IDs.</p><code>GET /api/v1/channels<br>GET /api/v1/posts<br>POST /api/v1/posts</code><p>Post write requests require an <code>Idempotency-Key</code> header. The same key and request return the same response.</p><a href="https://github.com/djsnabu/open-social/blob/main/docs/api.md" target="_blank" rel="noreferrer">API documentation and examples ↗</a></aside></div>
       </section>
-      <footer>Open Social <span>Itse ylläpidettävä · Avoin lähdekoodi</span></footer>
+      <footer>Open Social <span>Self-hosted · Open source</span></footer>
     </main>
   </div>
-  <dialog id="compose-dialog" aria-labelledby="editor-title"><button id="close-compose" class="quiet dialog-close">Sulje ×</button></dialog>
-  <dialog id="details"><button id="close-details" class="quiet dialog-close" aria-label="Sulje">Sulje ×</button><div id="detail-content"></div></dialog>
+  <dialog id="compose-dialog" aria-labelledby="editor-title"><button id="close-compose" class="quiet dialog-close">Close ×</button></dialog>
+  <dialog id="details"><button id="close-details" class="quiet dialog-close" aria-label="Close">Close ×</button><div id="detail-content"></div></dialog>
 <dialog id="crop-dialog" aria-labelledby="crop-title">
-    <h2 id="crop-title">Rajaa kuva</h2>
-    <p class="small muted">Nämä kuvasuhteet sopivat Instagramiin. Siirrä kuvaa vetämällä tai säädä liukusäätimillä.</p>
-    <label>Kuvasuhde<select id="crop-ratio"><option value="0.8">Pysty · 4:5</option><option value="1">Neliö · 1:1</option><option value="1.91">Vaaka · 1,91:1</option></select></label>
-    <canvas id="crop-preview" aria-label="Rajattavan kuvan esikatselu"></canvas>
-    <label>Lähennys<input id="crop-zoom" type="range" min="1" max="3" step="0.01" value="1"></label>
-    <div class="crop-position"><label>Vaakasijainti<input id="crop-x" type="range" min="0" max="1" step="0.001" value="0.5"></label><label>Pystysijainti<input id="crop-y" type="range" min="0" max="1" step="0.001" value="0.5"></label></div>
+    <h2 id="crop-title">Crop image</h2>
+    <p class="small muted">These aspect ratios work with Instagram. Drag to reposition the image or use the sliders.</p>
+    <label>Aspect ratio<select id="crop-ratio"><option value="0.8">Portrait · 4:5</option><option value="1">Square · 1:1</option><option value="1.91">Landscape · 1.91:1</option></select></label>
+    <canvas id="crop-preview" aria-label="Crop preview"></canvas>
+    <label>Zoom<input id="crop-zoom" type="range" min="1" max="3" step="0.01" value="1"></label>
+    <div class="crop-position"><label>Horizontal position<input id="crop-x" type="range" min="0" max="1" step="0.001" value="0.5"></label><label>Vertical position<input id="crop-y" type="range" min="0" max="1" step="0.001" value="0.5"></label></div>
     <p id="crop-error" role="alert" hidden></p>
-    <div class="row-actions"><button id="crop-apply">Käytä rajausta</button><button id="crop-original" class="quiet">Käytä alkuperäistä</button><button id="crop-cancel" class="quiet">Peruuta</button></div>
+    <div class="row-actions"><button id="crop-apply">Apply crop</button><button id="crop-original" class="quiet">Use original</button><button id="crop-cancel" class="quiet">Cancel</button></div>
   </dialog>
 </body>
 </html>

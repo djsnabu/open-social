@@ -179,8 +179,8 @@ test('media is decoded, normalized, validated and cannot traverse paths', async 
 test('timezone conversion handles Finnish DST, gaps and overlaps', () => {
   assert.equal(toInstant('2026-10-14T12:00', 'Europe/Helsinki'), '2026-10-14T09:00:00.000Z');
   assert.equal(toInstant('2026-12-14T12:00', 'Europe/Helsinki'), '2026-12-14T10:00:00.000Z');
-  assert.throws(() => toInstant('2026-03-29T03:30', 'Europe/Helsinki'), /ei ole olemassa/);
-  assert.throws(() => toInstant('2026-10-25T03:30', 'Europe/Helsinki'), /kaksiselitteisen/);
+  assert.throws(() => toInstant('2026-03-29T03:30', 'Europe/Helsinki'), /does not exist/);
+  assert.throws(() => toInstant('2026-10-25T03:30', 'Europe/Helsinki'), /ambiguous/);
   assert.throws(() => toInstant('2026-02-30T12:00', 'UTC'));
   assert.equal(wallTime(toInstant('2026-10-14T12:00', 'Asia/Kathmandu'), 'Asia/Kathmandu'), '2026-10-14T12:00');
 });

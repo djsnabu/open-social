@@ -5,12 +5,12 @@ export function cropRect(width, height, ratio, zoom, x, y) {
 }
 
 export async function cropImage(file) {
-  if (file.size > 8 * 1024 * 1024) throw new Error('Kuvan enimmäiskoko on 8 Mt.');
-  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) throw new Error('Valitse JPEG-, PNG- tai WebP-kuva.');
+  if (file.size > 8 * 1024 * 1024) throw new Error('Images must be 8 MB or smaller.');
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) throw new Error('Choose a JPEG, PNG or WebP image.');
   let bitmap;
   try { bitmap = await createImageBitmap(file); }
-  catch { throw new Error('Kuvaa ei voitu avata. Valitse toinen kuva.'); }
-  if (bitmap.width * bitmap.height > 40_000_000) { bitmap.close(); throw new Error('Kuvan enimmäiskoko on 40 megapikseliä.'); }
+  catch { throw new Error('Could not open this image. Choose another image.'); }
+  if (bitmap.width * bitmap.height > 40_000_000) { bitmap.close(); throw new Error('Images must be 40 megapixels or smaller.'); }
   const $ = id => document.getElementById(`crop-${id}`);
   const dialog = $('dialog'), canvas = $('preview'), context = canvas.getContext('2d');
   const ratio = $('ratio'), zoom = $('zoom'), x = $('x'), y = $('y');
@@ -52,7 +52,7 @@ export async function cropImage(file) {
         output.toBlob(blob => {
           if (closed || !dialog.open) return;
           $('apply').disabled = false;
-          if (!blob) { $('error').textContent = 'Rajauksen tallentaminen epäonnistui. Yritä uudelleen.'; $('error').hidden = false; return; }
+          if (!blob) { $('error').textContent = 'Could not save the crop. Try again.'; $('error').hidden = false; return; }
           result = blob; dialog.close();
         }, 'image/jpeg', 0.92);
       };

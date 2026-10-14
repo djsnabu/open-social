@@ -21,19 +21,19 @@ export function createMeta(config, transport = fetch) {
       });
       data = await response.json();
     } catch {
-      throw new ProviderError('provider_unavailable', 'Meta-yhteys katkesi. Tarkista julkaisun tila ennen uutta yritystä.', publication);
+      throw new ProviderError('provider_unavailable', 'The connection to Meta was lost. Check the post status before trying again.', publication);
     }
     if (!response.ok || data.error) {
       const code = data.error?.code;
       // Provider error text may contain tokens or private content; store only our own messages.
-      if (code === 190) throw new ProviderError('reconnect_required', 'Kanavan kirjautuminen on vanhentunut. Yhdistä kanava uudelleen.');
-      if ([10, 200].includes(code)) throw new ProviderError('permission_required', 'Meta-sovellukselta tai käyttäjältä puuttuu julkaisuoikeus. Tarkista oikeudet ja yhdistä uudelleen.');
-      throw new ProviderError('provider_rejected', 'Meta ei hyväksynyt pyyntöä. Tarkista kuvan vaatimukset, kanavan oikeudet ja Metan palvelutila.', publication && (response.status >= 500 || data.error?.is_transient === true));
+      if (code === 190) throw new ProviderError('reconnect_required', 'Channel authentication has expired. Reconnect the channel.');
+      if ([10, 200].includes(code)) throw new ProviderError('permission_required', 'The Meta app or user lacks publishing permission. Check permissions and reconnect.');
+      throw new ProviderError('provider_rejected', 'Meta rejected the request. Check image requirements, channel permissions and Meta service status.', publication && (response.status >= 500 || data.error?.is_transient === true));
     }
     return data;
   }
   const requireId = (data, publication = false) => {
-    if (!/^\d+(?:_\d+)?$/.test(data?.id || '')) throw new ProviderError('invalid_provider_response', 'Meta ei palauttanut julkaisun tunnistetta.', publication);
+    if (!/^\d+(?:_\d+)?$/.test(data?.id || '')) throw new ProviderError('invalid_provider_response', 'Meta did not return a post ID.', publication);
     return data.id;
   };
   return {
@@ -45,9 +45,9 @@ export function createMeta(config, transport = fetch) {
     },
     async discover(code) {
       const short = await graph('oauth/access_token', null, { client_id: config.metaAppId, client_secret: config.metaSecret, redirect_uri: `${config.origin}/auth/meta/callback`, code });
-      requireValue(typeof short.access_token === 'string', 'oauth_failed', 'Meta ei palauttanut käyttöoikeutta.', 502);
+      requireValue(typeof short.access_token === 'string', 'oauth_failed', 'Meta did not return an access token.', 502);
       const long = await graph('oauth/access_token', null, { grant_type: 'fb_exchange_token', client_id: config.metaAppId, client_secret: config.metaSecret, fb_exchange_token: short.access_token });
-      requireValue(typeof long.access_token === 'string', 'oauth_failed', 'Meta ei palauttanut pitkäkestoista käyttöoikeutta.', 502);
+      requireValue(typeof long.access_token === 'string', 'oauth_failed', 'Meta did not return a long-lived access token.', 502);
       const candidates = [];
       let after;
       for (let page = 0; page < 50; page++) {
@@ -60,9 +60,9 @@ export function createMeta(config, transport = fetch) {
         }
         if (!data.paging?.next) return candidates;
         after = data.paging.cursors?.after;
-        requireValue(after, 'pagination_failed', 'Kanavalistan jatkaminen epäonnistui.', 502);
+        requireValue(after, 'pagination_failed', 'Could not load the next page of channels.', 502);
       }
-      throw new AppError(502, 'too_many_channels', 'Yli 5 000 sivua: rajaa sovellukselle annettuja sivuoikeuksia.');
+      throw new AppError(502, 'too_many_channels', 'More than 5,000 pages: limit the page permissions granted to the app.');
     },
     async health(channel, token) {
       const data = await graph(channel.remote_id, token, { fields: 'id' });
@@ -84,22 +84,22 @@ export function createMeta(config, transport = fetch) {
       for (let i = 0; i < 10; i++) {
         const result = await graph(container, token, { fields: 'status_code' });
         if (result.status_code === 'FINISHED') { ready = true; break; }
-        if (['ERROR', 'EXPIRED'].includes(result.status_code)) throw new ProviderError('media_rejected', 'Meta hylkäsi kuvan. Tarkista JPEG-kuvan koko ja kuvasuhde.');
-        if (result.status_code === 'PUBLISHED') throw new ProviderError('already_published', 'Kuva on jo julkaistu. Tarkista julkaisutunniste.', true);
+        if (['ERROR', 'EXPIRED'].includes(result.status_code)) throw new ProviderError('media_rejected', 'Meta rejected the image. Check the JPEG dimensions and aspect ratio.');
+        if (result.status_code === 'PUBLISHED') throw new ProviderError('already_published', 'The image is already published. Check the post ID.', true);
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
-      if (!ready) throw new ProviderError('media_processing', 'Kuvan käsittely ei valmistunut. Voit yrittää myöhemmin uudelleen.');
+      if (!ready) throw new ProviderError('media_processing', 'Image processing did not finish. You can try again later.');
       const id = requireId(await graph(`${channel.remote_id}/media_publish`, token, { creation_id: container }, 'POST', true), true);
       let url = null;
       try { url = (await graph(id, token, { fields: 'permalink' })).permalink || null; } catch { /* Publication is already confirmed by its ID. */ }
       return { id, url };
     },
     async reconcile(post, channel, token, remoteId) {
-      requireValue(/^\d+(?:_\d+)?$/.test(remoteId), 'invalid_remote_id', 'Virheellinen julkaisutunniste.');
+      requireValue(/^\d+(?:_\d+)?$/.test(remoteId), 'invalid_remote_id', 'Invalid post ID.');
       const fields = channel.provider === 'facebook' ? 'id,from,message,permalink_url' : 'id,owner,caption,permalink';
       const data = await graph(remoteId, token, { fields });
       requireValue(String(data.from?.id || data.owner?.id) === channel.remote_id && (data.message || data.caption || '') === post.text,
-        'publication_mismatch', 'Julkaisun kanava tai teksti ei vastaa tätä luonnosta.', 409);
+        'publication_mismatch', 'The post channel or text does not match this draft.', 409);
       return { id: requireId(data), url: data.permalink_url || data.permalink || null };
     },
   };

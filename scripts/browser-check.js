@@ -27,13 +27,16 @@ try {
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.goto(config.origin);
-    await page.getByLabel('Salasana', { exact: true }).fill('browser-test-only');
-    await page.getByRole('button', { name: 'Avaa työtila' }).click();
+    assert.equal(await page.locator('html').getAttribute('lang'), 'en');
+    await page.getByLabel('Password', { exact: true }).fill('browser-test-only');
+    await page.getByRole('button', { name: 'Open workspace' }).click();
     await page.locator('#workspace').waitFor({ state: 'visible' });
+    assert.equal(await page.locator('.weekday').first().innerText(), 'Mon');
+    assert.equal(await page.locator('#month-title').innerText(), new Intl.DateTimeFormat('en-GB', { month: 'long', year: 'numeric' }).format(new Date()));
     await page.screenshot({ path: `artifacts/calendar-${viewport.width}.png`, fullPage: true, animations: 'disabled' });
     await page.locator('nav a[href="#editor"]').click();
     await page.locator('#post-channel').selectOption('channel-1');
-    await page.getByLabel('Julkaisun teksti').fill(`Selainkoe ${viewport.width}: kesän tapahtumat.`);
+    await page.getByLabel('Post text').fill(`Selainkoe ${viewport.width}: kesän tapahtumat.`);
     await page.locator('#post-file').setInputFiles({ name: 'crop-test.png', mimeType: 'image/png', buffer: fixture });
     await page.locator('#crop-dialog').waitFor({ state: 'visible' });
     await page.locator('#crop-cancel').click();
@@ -60,18 +63,18 @@ try {
     await page.waitForFunction(() => !document.querySelector('#post-file').disabled);
     assert.equal(await page.locator('#preview-image').getAttribute('src'), previousImage);
     await page.locator('#post-channel').selectOption('channel-ig');
-    await page.getByRole('button', { name: 'Tallenna luonnos', exact: true }).click();
+    await page.getByRole('button', { name: 'Save draft', exact: true }).click();
     await page.locator('#calendar').waitFor({ state: 'visible' });
-    await page.getByRole('button', { name: `Avaa julkaisu: Selainkoe ${viewport.width}: kesän tapahtumat.` }).click();
-    await page.getByRole('button', { name: 'Muokkaa', exact: true }).click();
+    await page.getByRole('button', { name: `Open post: Selainkoe ${viewport.width}: kesän tapahtumat.` }).click();
+    await page.getByRole('button', { name: 'Edit', exact: true }).click();
     await page.locator('#post-channel').selectOption('channel-1');
     await page.locator('#remove-image').click(); // Local HTTP test server cannot serve public Meta images.
-    await page.getByLabel('Julkaisun teksti').fill(`Muokattu selainkoe ${viewport.width}`);
+    await page.getByLabel('Post text').fill(`Muokattu selainkoe ${viewport.width}`);
     await page.locator('#post-zone').selectOption('UTC');
     const later = new Date(Date.now() + 86400000).toISOString().slice(0, 16);
     await page.locator('#schedule-time').fill(later);
     await page.screenshot({ path: `artifacts/editor-${viewport.width}.png`, fullPage: true, animations: 'disabled' });
-    await page.getByRole('button', { name: 'Ajasta', exact: true }).click();
+    await page.getByRole('button', { name: 'Schedule', exact: true }).click();
     await page.locator('#calendar').waitFor({ state: 'visible' });
     assert.equal(app.db.prepare('SELECT state FROM posts WHERE text=?').get(`Muokattu selainkoe ${viewport.width}`).state, 'scheduled');
     // Multiple posts on one day, including media and a cancelled post, use the real calendar renderer.
@@ -110,7 +113,7 @@ try {
     await page.waitForFunction(() => !document.querySelector('#post-file').disabled);
     assert.equal(await page.locator('#compose-dialog').isVisible(), true);
     await page.screenshot({ path: `artifacts/day-editor-${viewport.width}.png`, fullPage: false, animations: 'disabled' });
-    await page.getByRole('button', { name: 'Tallenna luonnos', exact: true }).click();
+    await page.getByRole('button', { name: 'Save draft', exact: true }).click();
     await page.locator('#compose-dialog').waitFor({ state: 'hidden' });
     assert.equal(app.db.prepare('SELECT state FROM posts WHERE text=?').get(`Päivän julkaisu ${viewport.width}`).state, 'draft');
     await page.locator('#create-for-day').click();
@@ -119,11 +122,11 @@ try {
     await page.locator('#post-channel').selectOption('channel-1');
     await page.locator('#post-text').fill(`Ikkunan ajastus ${viewport.width}`);
     await page.locator('#schedule-time').fill('2000-01-01T12:00');
-    await page.getByRole('button', { name: 'Ajasta', exact: true }).click();
+    await page.getByRole('button', { name: 'Schedule', exact: true }).click();
     await page.locator('#compose-dialog #notice').waitFor({ state: 'visible' });
-    assert.match(await page.locator('#notice').innerText(), /tuleva julkaisuaika/);
+    assert.match(await page.locator('#notice').innerText(), /future publish time/);
     await page.locator('#schedule-time').fill(later);
-    await page.getByRole('button', { name: 'Ajasta', exact: true }).click();
+    await page.getByRole('button', { name: 'Schedule', exact: true }).click();
     await page.locator('#compose-dialog').waitFor({ state: 'hidden' });
     assert.equal(app.db.prepare('SELECT state FROM posts WHERE text=?').get(`Ikkunan ajastus ${viewport.width}`).state, 'scheduled');
     await page.locator('#create-for-day').click();
@@ -139,15 +142,15 @@ try {
     assert.equal(await page.locator('#compose-dialog').isVisible(), false);
     assert.equal(await page.locator('#post-text').inputValue(), 'Säilytä keskeneräinen teksti');
     await page.locator('nav a[href="#channels"]').click();
-    await page.getByRole('button', { name: 'Tarkista', exact: true }).first().click();
-    await page.getByText('Yhteys toimii.', { exact: false }).waitFor();
+    await page.getByRole('button', { name: 'Check', exact: true }).first().click();
+    await page.getByText('Connection works.', { exact: false }).waitFor();
     await page.screenshot({ path: `artifacts/channels-${viewport.width}.png`, fullPage: true, animations: 'disabled' });
     await page.locator('nav a[href="#agents"]').click();
-    await page.getByLabel('Avaimen nimi').fill(`Selainkoe ${viewport.width}`);
-    await page.getByRole('button', { name: 'Luo API-avain' }).click();
+    await page.getByLabel('Key name').fill(`Selainkoe ${viewport.width}`);
+    await page.getByRole('button', { name: 'Create API key' }).click();
     await page.locator('#new-key').waitFor({ state: 'visible' });
     assert.match(await page.locator('#key-value').inputValue(), /^os_/);
-    await page.getByRole('button', { name: 'Olen tallentanut avaimen' }).click();
+    await page.getByRole('button', { name: 'I have saved the key' }).click();
     assert.equal(await page.locator('#key-value').inputValue(), '');
     for (const view of ['calendar', 'editor', 'channels', 'agents']) {
       await page.locator(`nav a[href="#${view}"]`).click();

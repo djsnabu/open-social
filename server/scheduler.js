@@ -14,7 +14,7 @@ export function createScheduler({ db, config, meta, secrets }) {
         db.prepare(`UPDATE attempts SET outcome='uncertain', finished_at=?, error_code='worker_interrupted'
           WHERE outcome='publishing' AND post_id IN (SELECT id FROM posts WHERE state='publishing' AND claimed_at < ?)` ).run(now, stale);
         db.prepare(`UPDATE posts SET state='uncertain', updated_at=?, version=version+1, error_code='worker_interrupted',
-          error_message='Julkaisu keskeytyi. Tarkista kanava ennen uutta julkaisua.' WHERE state='publishing' AND claimed_at < ?`).run(now, stale);
+          error_message='Publishing was interrupted. Check the channel before trying again.' WHERE state='publishing' AND claimed_at < ?`).run(now, stale);
       });
       if (!config.publishingEnabled) return;
       const post = transaction(db, () => {
@@ -28,7 +28,7 @@ export function createScheduler({ db, config, meta, secrets }) {
       const channel = db.prepare('SELECT * FROM channels WHERE id=?').get(post.channel_id);
       let outcome, result, error;
       try {
-        if (channel.status === 'disconnected') throw Object.assign(new Error('Yhdistä kanava uudelleen.'), { code: 'reconnect_required', uncertain: false });
+        if (channel.status === 'disconnected') throw Object.assign(new Error('Reconnect the channel.'), { code: 'reconnect_required', uncertain: false });
         result = await meta.publish(post, channel, secrets.decrypt(channel.secret),
           post.media_id ? `${config.origin}/media/${post.media_id}.jpg` : null,
           id => db.prepare('UPDATE posts SET container_id=? WHERE id=?').run(id, post.id));
@@ -41,7 +41,7 @@ export function createScheduler({ db, config, meta, secrets }) {
         const finished = new Date().toISOString();
         db.prepare(`UPDATE posts SET state=?, remote_id=?, remote_url=?, error_code=?, error_message=?, updated_at=?, version=version+1 WHERE id=? AND state='publishing'`).run(
           outcome, result?.id || null, result?.url || null, error?.code || (error ? 'internal_error' : null),
-          error?.status ? error.message : error ? 'Julkaisun tulosta ei voitu vahvistaa. Tarkista kanava.' : null, finished, post.id);
+          error?.status ? error.message : error ? 'Could not confirm the publishing result. Check the channel.' : null, finished, post.id);
         db.prepare(`UPDATE attempts SET outcome=?,finished_at=?,error_code=? WHERE post_id=? AND outcome='publishing'`).run(outcome, finished, error?.code || null, post.id);
         if (error?.code === 'reconnect_required') db.prepare("UPDATE channels SET status='reconnect_required' WHERE id=?").run(channel.id);
       });

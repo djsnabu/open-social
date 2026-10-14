@@ -2,7 +2,7 @@
 
 An open-source, self-hosted social publishing app designed for mobile users and AI agents.
 
-**Status: working local alpha.** Mobile-friendly Finnish UI, an authenticated agent API, SQLite scheduling, original Facebook/Instagram provider code, and automated tests are implemented. **Real Meta OAuth and social publication still require acceptance testing with your own app and a designated test account.** Publishing is disabled by default.
+**Status: working local alpha.** Mobile-friendly English UI, an authenticated agent API, SQLite scheduling, original Facebook/Instagram provider code, and automated tests are implemented. **Real Meta OAuth and social publication still require acceptance testing with your own app and a designated test account.** Publishing is disabled by default.
 
 ## Run locally
 
