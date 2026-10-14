@@ -18,6 +18,7 @@ for (const select of [$('#calendar-zone'), $('#post-zone')]) {
 }
 function notify(message, error = false) {
   clearTimeout(noticeTimer); $('#notice').textContent = message; $('#notice').className = error ? 'error' : ''; $('#notice').hidden = false;
+  if ($('#compose-dialog').open) $('#compose-dialog').prepend($('#notice')); else document.body.prepend($('#notice'));
   noticeTimer = setTimeout(() => { $('#notice').hidden = true; }, error ? 14000 : 6000);
 }
 async function api(path, { method = 'GET', data, idempotency, raw } = {}) {
@@ -58,14 +59,14 @@ async function refresh() {
 }
 function route() {
   const view = ['calendar', 'editor', 'channels', 'agents'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'calendar';
-  document.querySelectorAll('.view').forEach(el => { el.hidden = el.id !== view; });
+  document.querySelectorAll('.view').forEach(el => { el.hidden = el.id === 'editor' && $('#compose-dialog').open ? false : el.id !== view; });
   document.querySelectorAll('[data-nav]').forEach(el => { if (el.dataset.nav === view) el.setAttribute('aria-current', 'page'); else el.removeAttribute('aria-current'); });
   if (view === 'channels' && status) candidates().catch(error => notify(error.message, true));
   if (view === 'agents' && status) loadKeys().catch(error => notify(error.message, true));
 }
 window.addEventListener('hashchange', route);
 
-function renderCalendar() {
+function renderCalendar(updateGrid = true) {
   const zone = $('#calendar-zone').value;
   const counts = [posts.filter(p => p.state === 'draft').length, posts.filter(p => p.state === 'scheduled').length, posts.filter(p => p.state === 'published').length, posts.filter(p => ['failed', 'uncertain'].includes(p.state)).length];
   $('#stats').innerHTML = ['Luonnosta', 'Ajastettua', 'Julkaistua', 'Tarkistettavaa'].map((label, i) => `<div class="stat"><strong>${counts[i]}</strong><span>${label}${nextOffset !== null ? ' (ladatut)' : ''}</span></div>`).join('');
@@ -88,11 +89,16 @@ function renderCalendar() {
         <span class="calendar-post-text">${esc(p.text || 'Kuvajulkaisu')}</span>
         <span class="calendar-post-channel">${esc(channel?.name || 'Kanava')}</span>${badge(p.state)}</button>`;
     }).join('');
-    html += `<div class="day${date.getUTCMonth() !== month ? ' other' : ''}${day === today ? ' today' : ''}${day === selectedDay ? ' selected' : ''}"><button class="day-heading" data-day="${day}" aria-label="${day}, ${dayPosts.length} julkaisua" aria-pressed="${day === selectedDay}"><span class="day-number">${date.getUTCDate()}</span>${dayPosts.length ? `<span class="day-count">${dayPosts.length} julk.</span>` : ''}</button><div class="day-posts">${previews}</div></div>`;
+    html += `<div data-calendar-day="${day}" class="day${date.getUTCMonth() !== month ? ' other' : ''}${day === today ? ' today' : ''}${day === selectedDay ? ' selected' : ''}"><button class="day-heading" data-day="${day}" aria-label="${day}, ${dayPosts.length} julkaisua" aria-pressed="${day === selectedDay}"><span class="day-number">${date.getUTCDate()}</span>${dayPosts.length ? `<span class="day-count">${dayPosts.length} julk.</span>` : ''}</button><div class="day-posts">${previews}</div></div>`;
   }
-  $('#month-grid').innerHTML = html;
+  // Keep day buttons in place on selection so the browser can recognize a double-click.
+  if (updateGrid) $('#month-grid').innerHTML = html;
+  for (const button of document.querySelectorAll('[data-day]')) {
+    const selected = button.dataset.day === selectedDay;
+    button.setAttribute('aria-pressed', String(selected)); button.closest('.day').classList.toggle('selected', selected);
+  }
   $('#list-title').textContent = selectedDay ? `Julkaisut ${selectedDay.split('-').reverse().join('.')}` : 'Kuukauden julkaisut & luonnokset';
-  $('#clear-day').hidden = !selectedDay;
+  $('#clear-day').hidden = !selectedDay; $('#create-for-day').hidden = !selectedDay;
   const prefix = `${year}-${String(month + 1).padStart(2, '0')}`;
   const filter = $('#state-filter').value;
   const visible = posts.filter(p => (filter === 'all' || p.state === filter) && (p.scheduled_at ? wallTime(p.scheduled_at, zone).startsWith(selectedDay || prefix) : !selectedDay));
@@ -102,7 +108,30 @@ function renderCalendar() {
   }).join('') : '<div class="empty"><h3>Seuraava julkaisu alkaa tästä.</h3><p>Tässä näkymässä ei vielä ole julkaisuja. Yhdistä kanava ja tallenna ensimmäinen luonnos.</p><a href="#editor">Kirjoita julkaisu →</a></div>';
   $('#more-posts').hidden = nextOffset === null;
 }
-$('#month-grid').addEventListener('click', event => { const post = event.target.closest('[data-detail]'); if (post) { details(post.dataset.detail).catch(error => notify(error.message, true)); return; } const button = event.target.closest('[data-day]'); if (button) { selectedDay = button.dataset.day; renderCalendar(); } });
+$('#month-grid').addEventListener('click', event => { const post = event.target.closest('[data-detail]'); if (post) { details(post.dataset.detail).catch(error => notify(error.message, true)); return; } const button = event.target.closest('[data-day]'); if (button) { selectedDay = button.dataset.day; renderCalendar(false); } });
+function openDayEditor(day) {
+  if (uploading) return notify('Odota kuvan latauksen valmistumista.', true);
+  if ((editing || mediaId || $('#post-text').value) && !confirm('Aloitetaanko uusi julkaisu? Tallentamaton lomake tyhjennetään.')) return;
+  selectedDay = day; renderCalendar(false);
+  resetEditor();
+  $('#post-zone').value = $('#calendar-zone').value;
+  $('#schedule-time').value = `${day}T12:00`;
+  $('#editor-title').textContent = `Uusi julkaisu · ${day.split('-').reverse().join('.')}`;
+  $('#compose-dialog').append($('#editor'));
+  $('#editor').hidden = false;
+  $('#compose-dialog').showModal();
+  $('#post-channel').focus();
+}
+$('#month-grid').addEventListener('dblclick', event => {
+  if (event.target.closest('[data-detail]')) return;
+  const day = event.target.closest('[data-calendar-day]');
+  if (day) openDayEditor(day.dataset.calendarDay);
+});
+$('#create-for-day').onclick = () => { if (selectedDay) openDayEditor(selectedDay); };
+$('#close-compose').onclick = () => $('#compose-dialog').close();
+$('#compose-dialog').onclose = () => {
+  document.body.prepend($('#notice')); $('#channels').before($('#editor')); route();
+};
 $('#prev-month').onclick = () => { month--; if (month < 0) { month = 11; year--; } selectedDay = null; renderCalendar(); };
 $('#next-month').onclick = () => { month++; if (month > 11) { month = 0; year++; } selectedDay = null; renderCalendar(); };
 $('#clear-day').onclick = () => { selectedDay = null; renderCalendar(); };
@@ -172,7 +201,7 @@ $('#post-form').onsubmit = async event => {
       actionKey ||= crypto.randomUUID();
       editing = await api(`/posts/${saved.id}/${action}`, { method: 'POST', data: { version: saved.version, ...(scheduledAt ? { scheduled_at: scheduledAt } : {}) }, idempotency: actionKey });
     }
-    resetEditor(); await refresh(); location.hash = 'calendar';
+    resetEditor(); if ($('#compose-dialog').open) $('#compose-dialog').close(); await refresh(); location.hash = 'calendar';
     notify(action === 'draft' ? 'Luonnos tallennettu.' : action === 'schedule' ? 'Julkaisu ajastettu.' : 'Julkaisu lisätty jonoon. Vahvistettu tulos näkyy kalenterissa.');
   } catch (error) { notify(error.message, true); }
   finally { buttons.forEach(b => { b.disabled = false; }); }
@@ -252,5 +281,5 @@ if (params.has('connection_error')) notify(params.get('connection_error') === 'n
 if (location.search) history.replaceState(null, '', `/${location.hash}`);
 refresh().catch(error => { if (error.code !== 'unauthorized') notify(error.message, true); });
 setInterval(() => {
-  if (status && !document.hidden && (!location.hash || location.hash === '#calendar') && !$('#details').open) refresh().catch(error => notify(error.message, true));
+  if (status && !document.hidden && (!location.hash || location.hash === '#calendar') && !$('#details').open && !$('#compose-dialog').open) refresh().catch(error => notify(error.message, true));
 }, 15000);

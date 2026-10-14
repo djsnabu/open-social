@@ -223,3 +223,8 @@ input,textarea{font-size:16px}
 #crop-dialog input[type=range]{padding:0;accent-color:var(--accent)}
 .crop-position{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 #crop-error{color:var(--red)}
+
+#compose-dialog{width:min(1080px,calc(100% - 24px))}
+#compose-dialog #editor{clear:both;padding:0;animation:none}
+#compose-dialog h1{font-size:36px;letter-spacing:-1px}
+#compose-dialog #notice{position:sticky;top:0;left:auto;transform:none;width:100%}

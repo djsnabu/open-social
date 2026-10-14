@@ -34,9 +34,9 @@
       <section id="calendar" class="view">
         <div class="page-heading"><div><p class="eyebrow">SISÄLTÖSI RYTMI</p><h1>Kalenteri</h1><p class="muted">Tilaa ajatuksille. Paikka jokaiselle julkaisulle.</p></div><a class="button" href="#editor">＋ Uusi julkaisu</a></div>
         <div id="stats" class="stats"></div>
-        <div class="calendar-toolbar"><div class="month-switch"><button id="prev-month" class="quiet" aria-label="Edellinen kuukausi">←</button><h2 id="month-title"></h2><button id="next-month" class="quiet" aria-label="Seuraava kuukausi">→</button></div><label class="inline-label">Aikavyöhyke <select id="calendar-zone"></select></label></div>
+        <p class="small muted">Tuplaklikkaa päivää tehdäksesi uuden julkaisun.</p><div class="calendar-toolbar"><div class="month-switch"><button id="prev-month" class="quiet" aria-label="Edellinen kuukausi">←</button><h2 id="month-title"></h2><button id="next-month" class="quiet" aria-label="Seuraava kuukausi">→</button></div><label class="inline-label">Aikavyöhyke <select id="calendar-zone"></select></label></div>
         <p class="calendar-scroll-hint small muted">Selaa kalenteria sivusuunnassa nähdäksesi viikon kaikki päivät.</p><div class="calendar-scroll" role="region" aria-label="Kuukausikalenteri" tabindex="0"><div id="month-grid" class="month-grid"></div></div>
-        <div class="list-heading"><h2 id="list-title">Julkaisut</h2><button id="clear-day" class="quiet" hidden>Näytä koko kuukausi</button><label class="inline-label">Tila <select id="state-filter"><option value="all">Kaikki</option><option value="draft">Luonnokset</option><option value="scheduled">Ajastetut</option><option value="published">Julkaistut</option><option value="failed">Epäonnistuneet</option><option value="uncertain">Tarkistettavat</option><option value="cancelled">Perutut</option></select></label></div>
+        <div class="list-heading"><h2 id="list-title">Julkaisut</h2><button id="create-for-day" class="quiet" hidden>＋ Julkaisu tälle päivälle</button><button id="clear-day" class="quiet" hidden>Näytä koko kuukausi</button><label class="inline-label">Tila <select id="state-filter"><option value="all">Kaikki</option><option value="draft">Luonnokset</option><option value="scheduled">Ajastetut</option><option value="published">Julkaistut</option><option value="failed">Epäonnistuneet</option><option value="uncertain">Tarkistettavat</option><option value="cancelled">Perutut</option></select></label></div>
         <div id="post-list"></div><button id="more-posts" class="quiet" hidden>Lataa lisää julkaisuja</button>
       </section>
       <section id="editor" class="view" hidden>
@@ -66,6 +66,7 @@
       <footer>Open Social <span>Itse ylläpidettävä · Avoin lähdekoodi</span></footer>
     </main>
   </div>
+  <dialog id="compose-dialog" aria-labelledby="editor-title"><button id="close-compose" class="quiet dialog-close">Sulje ×</button></dialog>
   <dialog id="details"><button id="close-details" class="quiet dialog-close" aria-label="Sulje">Sulje ×</button><div id="detail-content"></div></dialog>
 <dialog id="crop-dialog" aria-labelledby="crop-title">
     <h2 id="crop-title">Rajaa kuva</h2>
