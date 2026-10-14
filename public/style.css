@@ -202,3 +202,9 @@ footer{font-size:9px}
 dialog{padding:22px}
 input,textarea{font-size:16px}
 }
+
+#crop-preview{display:block;max-width:100%;height:auto;max-height:32vh;margin:0 auto 16px;touch-action:none;cursor:grab;background:white}
+#crop-dialog label{margin-bottom:10px}
+#crop-dialog input[type=range]{padding:0;accent-color:var(--accent)}
+.crop-position{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+#crop-error{color:var(--red)}

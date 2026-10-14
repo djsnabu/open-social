@@ -46,7 +46,7 @@
             <label>Kanava<select id="post-channel" required></select></label>
             <label>Julkaisun teksti<textarea id="post-text" rows="9" placeholder="Mitä haluat kertoa?" maxlength="63206"></textarea></label><p id="char-count" class="small muted">0 merkkiä</p>
             <label class="upload">Lisää kuva<input id="post-file" type="file" accept="image/jpeg,image/png,image/webp"><span class="small muted">JPEG, PNG tai WebP · enintään 8 Mt. Kuva muunnetaan JPEG-muotoon ja sijaintitiedot poistetaan.</span></label>
-            <div id="media-info" class="small" hidden><span></span> <button type="button" id="remove-image" class="quiet">Poista kuva</button></div>
+            <div id="media-info" class="small" hidden><span></span> <button type="button" id="crop-image" class="quiet">Rajaa kuva</button> <button type="button" id="remove-image" class="quiet">Poista kuva</button></div>
             <div class="schedule-fields"><label>Julkaisuaika<input id="schedule-time" type="datetime-local"></label><label>Aikavyöhyke<select id="post-zone"></select></label></div>
             <p class="small muted">Luonnoksen muokkaus poistaa aiemman ajastuksen. Valitse ajastus uudelleen tallennuksen yhteydessä.</p>
             <div class="form-actions"><button type="submit" value="draft" class="quiet">Tallenna luonnos</button><button type="submit" value="schedule">Ajasta</button><button type="submit" value="publish" class="quiet">Julkaise nyt</button></div>
@@ -67,5 +67,15 @@
     </main>
   </div>
   <dialog id="details"><button id="close-details" class="quiet dialog-close" aria-label="Sulje">Sulje ×</button><div id="detail-content"></div></dialog>
+<dialog id="crop-dialog" aria-labelledby="crop-title">
+    <h2 id="crop-title">Rajaa kuva</h2>
+    <p class="small muted">Nämä kuvasuhteet sopivat Instagramiin. Siirrä kuvaa vetämällä tai säädä liukusäätimillä.</p>
+    <label>Kuvasuhde<select id="crop-ratio"><option value="0.8">Pysty · 4:5</option><option value="1">Neliö · 1:1</option><option value="1.91">Vaaka · 1,91:1</option></select></label>
+    <canvas id="crop-preview" aria-label="Rajattavan kuvan esikatselu"></canvas>
+    <label>Lähennys<input id="crop-zoom" type="range" min="1" max="3" step="0.01" value="1"></label>
+    <div class="crop-position"><label>Vaakasijainti<input id="crop-x" type="range" min="0" max="1" step="0.001" value="0.5"></label><label>Pystysijainti<input id="crop-y" type="range" min="0" max="1" step="0.001" value="0.5"></label></div>
+    <p id="crop-error" role="alert" hidden></p>
+    <div class="row-actions"><button id="crop-apply">Käytä rajausta</button><button id="crop-original" class="quiet">Käytä alkuperäistä</button><button id="crop-cancel" class="quiet">Peruuta</button></div>
+  </dialog>
 </body>
 </html>

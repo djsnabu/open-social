@@ -23,7 +23,7 @@ The initial workspace is empty. Configure your own Meta app to connect actual ch
 - One owner login; expiring HttpOnly sessions and origin checks.
 - Facebook OAuth with expiring, single-use state; explicit Page/linked Instagram selection and reconnection.
 - AES-256-GCM encryption of channel tokens and read-only connection checks.
-- Drafts, JPEG/PNG/WebP uploads, image validation, previews and editing.
+- Drafts, JPEG/PNG/WebP uploads, image validation, previews and editing. Built-in cropping offers 4:5, 1:1 and 1.91:1 with drag positioning and zoom.
 - Persistent UTC schedules with an IANA display timezone, DST ambiguity detection and a responsive calendar/list.
 - Immediate publication queue, recorded attempts, idempotent writes, optimistic edit versions and conservative handling of ambiguous outcomes.
 - Scoped and revocable agent keys; a documented `/api/v1` API.

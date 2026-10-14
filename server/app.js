@@ -109,7 +109,7 @@ export async function createApp(config, options = {}) {
       path = url.pathname;
       requireValue(req.headers.host === new URL(config.origin).host, 'invalid_host', 'Tuntematon palvelinosoite.', 400);
       if (req.method === 'GET' && path === '/healthz') return send(res, 200, { ok: true });
-      if (req.method === 'GET' && ['/', '/app.js', '/style.css', '/time.js'].includes(path)) {
+      if (req.method === 'GET' && ['/', '/app.js', '/style.css', '/time.js', '/crop.js'].includes(path)) {
         const name = path === '/' ? 'index.html' : path.slice(1);
         res.setHeader('Content-Type', name.endsWith('.js') ? 'text/javascript' : name.endsWith('.css') ? 'text/css' : 'text/html; charset=utf-8');
         return res.end(await readFile(resolve(publicDir, name)));

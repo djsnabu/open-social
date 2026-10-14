@@ -1,4 +1,5 @@
 import { wallTime, toInstant } from './time.js';
+import { cropImage } from './crop.js';
 
 const $ = selector => document.querySelector(selector);
 const labels = { draft: 'Luonnos', scheduled: 'Ajastettu', publishing: 'Julkaistaan', published: 'Julkaistu', failed: 'Epäonnistui', uncertain: 'Tarkista tulos', cancelled: 'Peruttu', connected: 'Yhdistetty', disconnected: 'Ei yhdistetty', reconnect_required: 'Yhdistä uudelleen', check_failed: 'Tarkistus epäonnistui' };
@@ -116,13 +117,28 @@ function resetEditor() {
 }
 $('#new-draft').onclick = () => { if (!$('#post-text').value || confirm('Tyhjennetäänkö tallentamaton lomake?')) resetEditor(); };
 $('#remove-image').onclick = () => { mediaId = null; mediaName = ''; submitKey = null; actionKey = null; $('#post-file').value = ''; preview(); };
-$('#post-file').onchange = async () => {
-  const file = $('#post-file').files[0]; if (!file) return;
-  if (file.size > 8 * 1024 * 1024) return notify('Kuvan enimmäiskoko on 8 Mt.', true);
-  uploading = true;
-  try { const image = await api('/media', { method: 'POST', raw: file }); mediaId = image.id; mediaName = `${file.name} · ${image.width} × ${image.height}`; submitKey = null; preview(); }
-  catch (error) { notify(error.message, true); }
-  finally { uploading = false; }
+async function attachImage(file, name) {
+  if (uploading) return;
+  uploading = true; $('#post-file').disabled = true; $('#crop-image').disabled = true;
+  try {
+    const cropped = await cropImage(file);
+    if (!cropped) return;
+    const image = await api('/media', { method: 'POST', raw: cropped });
+    mediaId = image.id; mediaName = `${name} · ${image.width} × ${image.height}`;
+    submitKey = null; actionKey = null; preview();
+  } catch (error) { notify(error.message, true); }
+  finally { uploading = false; $('#post-file').value = ''; $('#post-file').disabled = false; $('#crop-image').disabled = false; }
+}
+$('#post-file').onchange = () => {
+  const file = $('#post-file').files[0]; if (file) attachImage(file, file.name);
+};
+$('#crop-image').onclick = async () => {
+  if (uploading || !mediaId) return;
+  try {
+    const response = await fetch(`/media/${mediaId}.jpg`);
+    if (!response.ok) throw new Error('Kuvan lataaminen epäonnistui.');
+    await attachImage(await response.blob(), 'Rajattu kuva');
+  } catch (error) { notify(error.message, true); }
 };
 $('#post-form').onsubmit = async event => {
   event.preventDefault();
